@@ -1,10 +1,11 @@
 {
 	"node": {
 		"args": ["--rpc", "--rpcaddr", "127.0.0.1", "--rpcport", "8545"],
+		"path": "C:\\Projects\\XXX\\geth",
 		"port": 8545
 	},
 	"notify": {
-		"url": "blabla"
+		"url": ""
 	},
 	"restart": {
 		"maxBlockTime": 30,

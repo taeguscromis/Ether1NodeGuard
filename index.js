@@ -5,6 +5,7 @@
 'use strict'
 
 const child_process = require('child_process');
+const vsprintf = require('sprintf-js').vsprintf;
 const readline = require('readline');
 const appRoot = require('app-root-path');
 const request = require('request');
@@ -152,7 +153,17 @@ const NodeGuard = function () {
 
     // send notification if specified in the config
     if ((sendNotification) && (configOpts.notify.url)) {
-
+      var hookOptions = {
+        uri: configOpts.notify.url,
+        method: 'POST',
+        json: {
+          "content": vsprintf('Node **%s** reported an error -> %s', [configOpts.node.name || os.hostname(), errorData + "\n"])
+        }
+      }
+    
+      request(hookOptions, function (error, response, data) {
+        // for now its fire and forget, no matter if error occurs
+      });    
     }
 
     // start the daemon again

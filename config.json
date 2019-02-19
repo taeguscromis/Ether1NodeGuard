@@ -2,10 +2,11 @@
 	"node": {
 		"args": ["--rpc", "--rpcaddr", "127.0.0.1", "--rpcport", "8545"],
 		"path": "C:\\Projects\\XXX\\geth",
-		"port": 8545
+		"port": 8545,
+		"name": "TestNode"
 	},
 	"notify": {
-		"url": ""
+		"url": "https://discordapp.com/api/webhooks/547410220150816769/Ujf5LoAqVwh2G1YijqYwABJkFZcSJ9H-AAQXQYY41AI3-C2Ac7xkbOvmDnCgcL3uj2X7"
 	},
 	"restart": {
 		"maxBlockTime": 30,

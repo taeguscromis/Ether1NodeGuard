@@ -1,0 +1,13 @@
+{
+	"node": {
+		"args": ["--rpc", "--rpcaddr", "127.0.0.1", "--rpcport", "8545"],
+		"port": 8545
+	},
+	"notify": {
+		"url": "blabla"
+	},
+	"restart": {
+		"maxBlockTime": 30,
+		"maxInitTime": 10
+	}	
+}

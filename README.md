@@ -1,2 +1,2 @@
 # Ether1NodeGuard
-Ether1 node guardian
+Ether1 daemon node guard

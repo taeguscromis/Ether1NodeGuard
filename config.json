@@ -1,6 +1,6 @@
 {
 	"node": {
-		"args": ["--rpc", "--rpcaddr", "127.0.0.1", "--rpcport", "8545"],
+		"args": ["--fast", "--rpc", "--rpcaddr", "0.0.0.0", "--rpcport", "8545", "--rpccorsdomain", "*", "--rpcapi", "admin,db,eth,debug,net,txpool,personal,web3"],
 		"path": "C:\\Projects\\XXX\\geth",
 		"port": 8545,
 		"name": "TestNode"
@@ -9,7 +9,9 @@
 		"url": "https://discordapp.com/api/webhooks/547410220150816769/Ujf5LoAqVwh2G1YijqYwABJkFZcSJ9H-AAQXQYY41AI3-C2Ac7xkbOvmDnCgcL3uj2X7"
 	},
 	"restart": {
-		"maxBlockTime": 30,
-		"maxInitTime": 10
+		"minTimeBetweenErrors": 30,
+		"startAgainAfter": 300,
+		"maxBlockTime": 1800,
+		"maxInitTime": 600
 	}	
 }

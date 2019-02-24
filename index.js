@@ -52,7 +52,7 @@ const RpcCommunicator = function(configOpts, errorCallback) {
     checkAliveAndWell();
   }
 
-  this.lastHeight = function() {
+  this.getLastHeight = function() {
     return lastHeight;
   }
 
@@ -273,7 +273,7 @@ const NodeGuard = function () {
             name: configOpts.node.name || os.hostname(),
             errors: errorCount,
             startTime: starupTime,
-            blockHeight: RpcComms ? RpcComms.lastHeight() : 0,
+            blockHeight: RpcComms ? RpcComms.getLastHeight() : 0,
             nodeVersion: version
           }
         }

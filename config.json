@@ -9,8 +9,8 @@
 		"url": "https://discordapp.com/api/webhooks/547410220150816769/Ujf5LoAqVwh2G1YijqYwABJkFZcSJ9H-AAQXQYY41AI3-C2Ac7xkbOvmDnCgcL3uj2X7"
 	},
 	"restart": {
-		"minTimeBetweenErrors": 30,
-		"startAgainAfter": 300,
+		"errorForgetTime": 600,
+		"maxCloseErrors": 3,
 		"maxBlockTime": 1800,
 		"maxInitTime": 600
 	}	

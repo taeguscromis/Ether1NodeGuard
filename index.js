@@ -59,7 +59,7 @@ const RpcCommunicator = function(configOpts, errorCallback) {
     } else {
       var duration = moment.duration(moment().diff(lastTS));
 
-      if (duration.asMinutes() > (configOpts.restart.maxBlockTime || 1800)) {
+      if (duration.asSeconds() > (configOpts.restart.maxBlockTime || 1800)) {
         errorCallback("No new block has be seen for more then 30 minutes");
         return false;
       } else {
@@ -116,8 +116,8 @@ const NodeGuard = function () {
   // set the daemon path and start the node process
   const daemonPath = path.join(rootPath, 'geth');
   var configOpts = JSON.parse(fs.readFileSync(path.join(rootPath, 'config.json'), 'utf8'))
-  var lastErrorTime = moment(0);
   var starupTime = moment();
+  var errorCount = 0;
   var initialized = false;
   var nodeProcess = null;
   var RpcComms = null;
@@ -138,57 +138,63 @@ const NodeGuard = function () {
   }
 
   /***************************************************************
+        log the error to text file and send it to Discord
+  ***************************************************************/
+ function logError(errorMsg, sendNotification) {
+  var userDataDir = process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + 'Library/Preferences' : process.env.HOME + "/.local/share");
+  userDataDir = path.join(userDataDir, "Ether1NodeGuard");
+
+  if (!fs.existsSync(userDataDir)) {
+    fs.mkdirSync(userDataDir); 
+  }   
+
+  // write every error to a log file for possible later analization
+  fs.appendFile(path.join(userDataDir, 'errorlog.txt'), errorMsg + "\n", function (err) {});
+
+  // send notification if specified in the config
+  if ((sendNotification) && (configOpts.notify.url)) {
+    var hookOptions = {
+      uri: configOpts.notify.url,
+      method: 'POST',
+      json: {
+        "content": vsprintf('Node **%s** reported an error -> %s', [configOpts.node.name || os.hostname(), errorMsg + "\n"])
+      }
+    }
+  
+    request(hookOptions, function (error, response, data) {
+      // for now its fire and forget, no matter if error occurs
+    });    
+  }
+}
+
+/***************************************************************
         restarts the node if an error occurs automatically
   ***************************************************************/
   function restartDaemonProcess(errorData, sendNotification) {
-    var userDataDir = process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + 'Library/Preferences' : process.env.HOME + "/.local/share");
-    userDataDir = path.join(userDataDir, "Ether1NodeGuard");
+    logError(errorData, sendNotification);
+
+    // increase error count and stop instance
+    errorCount = errorCount + 1;
     guardInstance.stop();
 
-    if (!fs.existsSync(userDataDir)) {
-      fs.mkdirSync(userDataDir); 
-    }   
-
-    // write every error to a log file for possible later analization
-    fs.appendFile(path.join(userDataDir, 'errorlog.txt'), errorData + "\n", function (err) {});
-
-    // send notification if specified in the config
-    if ((sendNotification) && (configOpts.notify.url)) {
-      var hookOptions = {
-        uri: configOpts.notify.url,
-        method: 'POST',
-        json: {
-          "content": vsprintf('Node **%s** reported an error -> %s', [configOpts.node.name || os.hostname(), errorData + "\n"])
-        }
-      }
-    
-      request(hookOptions, function (error, response, data) {
-        // for now its fire and forget, no matter if error occurs
-      });    
-    }
-
-    // get the duration between this and the last error
-    var retryInterval = (configOpts.restart.startAgainAfter || 300) * 1000;
-    var duration = moment.duration(moment().diff(lastErrorTime));
-
-    // check if at least min time passed between this error and the last one
-    if (duration.asSeconds() > (configOpts.restart.minTimeBetweenErrors || 30)) {
-      lastErrorTime = moment();
-      // start the daemon again
-      startDaemonProcess();
+    // check if we have crossed the maximum error number in short period
+    if (errorCount > (configOpts.restart.maxCloseErrors || 3)) {
+      logError("To many errors in a short ammount of time. Stopping.\n", true);
+      process.exit(0);
     } else {
-      fs.appendFile(path.join(userDataDir, 'errorlog.txt'), "Consecutive errors are to close to each other, trying again later\n", function (err) {});
-      setTimeout(() => {
-        startDaemonProcess();
-      }, retryInterval);  
+      startDaemonProcess();
     }
+
+    setTimeout(() => {
+      errorCount = errorCount - 1;
+    }, (configOpts.restart.errorForgetTime || 600) * 1000);  
   }
 
   function checkIfInitialized() {
     if (!initialized) {
       var duration = moment.duration(moment().diff(starupTime));
 
-      if (duration.asMinutes() > (configOpts.restart.maxInitTime || 600)) {
+      if (duration.asSeconds() > (configOpts.restart.maxInitTime || 600)) {
         restartDaemonProcess("Initialization is taking to long, restarting", true);
       } else {
         setTimeout(() => {
@@ -202,7 +208,8 @@ const NodeGuard = function () {
     nodeProcess = child_process.spawn(configOpts.node.path || daemonPath, configOpts.node.args || []);
 
     if (!nodeProcess) {
-      app.quit();
+      logError("Failed to start the process instance. Stopping.\n", false);
+      process.exit(0);
     } else {
       nodeProcess.on('error', function(err) {      
         restartDaemonProcess("Error on starting the node process", false);

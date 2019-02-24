@@ -11,6 +11,7 @@ const appRoot = require('app-root-path');
 const request = require('request');
 const moment = require('moment');
 const path = require('path');
+const http = require('http');
 const fs = require('fs');
 const os = require('os');
 
@@ -49,6 +50,10 @@ const RpcCommunicator = function(configOpts, errorCallback) {
   this.start = function() {
     isRunning = true;
     checkAliveAndWell();
+  }
+
+  this.lastHeight = function() {
+    return lastHeight;
   }
 
   function checkTheBlockHeight(currHeight) {
@@ -121,6 +126,7 @@ const NodeGuard = function () {
   var initialized = false;
   var nodeProcess = null;
   var RpcComms = null;
+  var version = '';
 
   this.stop = function() {
     if (RpcComms) {
@@ -226,7 +232,13 @@ const NodeGuard = function () {
         input: nodeProcess.stderr
       });
 
-      dataStream.on('line', (line) => {
+      function processSingleLine(line) {
+        if ((!version) && (line.search("Geth/v") > -1)) {
+          var startIndex = line.search("Geth/v") + 6;
+          var endIndex = startIndex + 5;
+          version = line.substring(startIndex, endIndex);
+        }
+
         // core is initialized, we can start the queries
         if (line.indexOf("Block synchronisation started") > -1) {
           setTimeout(() => {
@@ -236,23 +248,51 @@ const NodeGuard = function () {
             RpcComms.start();
           }, 5000);  
         }
+      }
+
+      dataStream.on('line', (line) => {
+        processSingleLine(line);
       });
 
       errorStream.on('line', (line) => {
-        // core is initialized, we can start the queries
-        if (line.indexOf("Block synchronisation started") > -1) {
-          setTimeout(() => {
-            initialized = true;
-
-            RpcComms = new RpcCommunicator(configOpts, errorCallback);
-            RpcComms.start();
-          }, 5000);  
-        }
+        processSingleLine(line);      
       });
 
       // start the initilize checking
       checkIfInitialized();
     }
+  }
+
+  //create a server object if required
+  if ((configOpts.api) && (configOpts.api.port)) {
+    http.createServer(function (req, res) {
+      if (req.url.toUpperCase() == '/GETINFO')
+      {
+        var statusResponse = {
+          status: {
+            name: configOpts.node.name || os.hostname(),
+            errors: errorCount,
+            startTime: starupTime,
+            blockHeight: RpcComms ? RpcComms.lastHeight() : 0,
+            nodeVersion: version
+          }
+        }
+    
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'X-Powered-By':'nodejs'
+        });
+    
+        // send the response payload
+        res.write(JSON.stringify(statusResponse));
+      } else {
+        res.writeHead(403);
+      }
+  
+      // finish
+      res.end();  
+    }).listen(configOpts.api.port);  
   }
 
   // start the process

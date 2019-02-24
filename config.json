@@ -1,6 +1,6 @@
 {
 	"node": {
-		"args": ["--fast", "--rpc", "--rpcaddr", "0.0.0.0", "--rpcport", "8545", "--rpccorsdomain", "*", "--rpcapi", "admin,db,eth,debug,net,txpool,personal,web3"],
+		"args": ["--rpc", "--rpcaddr", "0.0.0.0", "--rpcport", "8545", "--rpccorsdomain", "*", "--rpcapi", "admin,db,eth,debug,net,txpool,personal,web3"],
 		"path": "C:\\Projects\\XXX\\geth",
 		"port": 8545,
 		"name": "TestNode"
@@ -13,5 +13,8 @@
 		"maxCloseErrors": 3,
 		"maxBlockTime": 1800,
 		"maxInitTime": 600
-	}	
+	},
+	"api": {
+		"port": 8080
+	}
 }

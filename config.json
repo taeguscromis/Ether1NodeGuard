@@ -6,7 +6,7 @@
 		"name": "TestNode"
 	},
 	"notify": {
-		"url": "https://discordapp.com/api/webhooks/547410220150816769/Ujf5LoAqVwh2G1YijqYwABJkFZcSJ9H-AAQXQYY41AI3-C2Ac7xkbOvmDnCgcL3uj2X7"
+		"url": "put the web hook url in here"
 	},
 	"restart": {
 		"errorForgetTime": 600,
